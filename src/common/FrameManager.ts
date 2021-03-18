@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { debug } from '../common/Debug.js';
+
 import { EventEmitter } from './EventEmitter.js';
 import { assert } from './assert.js';
 import { helper, debugError } from './helper.js';
@@ -111,10 +113,13 @@ export class FrameManager extends EventEmitter {
     this._client.on('Page.lifecycleEvent', (event) =>
       this._onLifecycleEvent(event)
     );
+    this._client.on('Target.attachedToTarget', async (event) =>
+      this._onFrameMoved(event)
+    );
   }
 
   async initialize(): Promise<void> {
-    const result = await Promise.all<{}, Protocol.Page.GetFrameTreeResponse>([
+    const result = await Promise.all([
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree'),
     ]);
@@ -213,6 +218,20 @@ export class FrameManager extends EventEmitter {
     return watcher.navigationResponse();
   }
 
+  private async _onFrameMoved(event: Protocol.Target.AttachedToTargetEvent) {
+    if (event.targetInfo.type !== 'iframe') {
+      return;
+    }
+
+    // TODO(sadym): Remove debug message once proper OOPIF support is
+    // implemented: https://github.com/puppeteer/puppeteer/issues/2548
+    debug('puppeteer:frame')(
+      `The frame '${event.targetInfo.targetId}' moved to another session. ` +
+        `Out-of-process iframes (OOPIF) are not supported by Puppeteer yet. ` +
+        `https://github.com/puppeteer/puppeteer/issues/2548`
+    );
+  }
+
   _onLifecycleEvent(event: Protocol.Page.LifecycleEventEvent): void {
     const frame = this._frames.get(event.frameId);
     if (!frame) return;
@@ -303,18 +322,19 @@ export class FrameManager extends EventEmitter {
     await this._client.send('Page.addScriptToEvaluateOnNewDocument', {
       source: `//# sourceURL=${EVALUATION_SCRIPT_URL}`,
       worldName: name,
-    }),
-      await Promise.all(
-        this.frames().map((frame) =>
-          this._client
-            .send('Page.createIsolatedWorld', {
-              frameId: frame._id,
-              grantUniveralAccess: true,
-              worldName: name,
-            })
-            .catch(debugError)
-        )
-      ); // frames might be removed before we send this
+    });
+    // Frames might be removed before we send this.
+    await Promise.all(
+      this.frames().map((frame) =>
+        this._client
+          .send('Page.createIsolatedWorld', {
+            frameId: frame._id,
+            worldName: name,
+            grantUniveralAccess: true,
+          })
+          .catch(debugError)
+      )
+    );
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string): void {
@@ -350,8 +370,6 @@ export class FrameManager extends EventEmitter {
         world = frame._secondaryWorld;
       }
     }
-    if (contextPayload.auxData && contextPayload.auxData['type'] === 'isolated')
-      this._isolatedWorlds.add(contextPayload.name);
     const context = new ExecutionContext(this._client, contextPayload, world);
     if (world) world._setContext(context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -1043,7 +1061,7 @@ export class Frame {
    */
   waitFor(
     selectorOrFunctionOrTimeout: string | number | Function,
-    options: {} = {},
+    options: Record<string, unknown> = {},
     ...args: SerializableOrJSHandle[]
   ): Promise<JSHandle | null> {
     const xPathPattern = '//';
@@ -1231,7 +1249,7 @@ export class Frame {
    */
   _navigated(framePayload: Protocol.Page.Frame): void {
     this._name = framePayload.name;
-    this._url = framePayload.url;
+    this._url = `${framePayload.url}${framePayload.urlFragment || ''}`;
   }
 
   /**

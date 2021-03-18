@@ -5,7 +5,14 @@
 - Interactive Documentation: https://pptr.dev
 - API Translations: [中文|Chinese](https://zhaoqize.github.io/puppeteer-api-zh_CN/#/)
 - Troubleshooting: [troubleshooting.md](https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md)
-- Releases per Chromium Version:
+<!-- GEN:versions-per-release -->
+- Releases per Chromium version:
+  * Chromium 90.0.4427.0 - [Puppeteer v8.0.0](https://github.com/puppeteer/puppeteer/blob/v8.0.0/docs/api.md)
+  * Chromium 90.0.4403.0 - [Puppeteer v7.0.0](https://github.com/puppeteer/puppeteer/blob/v7.0.0/docs/api.md)
+  * Chromium 89.0.4389.0 - [Puppeteer v6.0.0](https://github.com/puppeteer/puppeteer/blob/v6.0.0/docs/api.md)
+  * Chromium 88.0.4298.0 - [Puppeteer v5.5.0](https://github.com/puppeteer/puppeteer/blob/v5.5.0/docs/api.md)
+  * Chromium 87.0.4272.0 - [Puppeteer v5.4.0](https://github.com/puppeteer/puppeteer/blob/v5.4.0/docs/api.md)
+  * Chromium 86.0.4240.0 - [Puppeteer v5.3.0](https://github.com/puppeteer/puppeteer/blob/v5.3.0/docs/api.md)
   * Chromium 85.0.4182.0 - [Puppeteer v5.2.1](https://github.com/puppeteer/puppeteer/blob/v5.2.1/docs/api.md)
   * Chromium 84.0.4147.0 - [Puppeteer v5.1.0](https://github.com/puppeteer/puppeteer/blob/v5.1.0/docs/api.md)
   * Chromium 83.0.4103.0 - [Puppeteer v3.1.0](https://github.com/puppeteer/puppeteer/blob/v3.1.0/docs/api.md)
@@ -19,7 +26,7 @@
   * Chromium 74.0.3723.0 - [Puppeteer v1.13.0](https://github.com/puppeteer/puppeteer/blob/v1.13.0/docs/api.md)
   * Chromium 73.0.3679.0 - [Puppeteer v1.12.2](https://github.com/puppeteer/puppeteer/blob/v1.12.2/docs/api.md)
   * [All releases](https://github.com/puppeteer/puppeteer/releases)
-
+<!-- GEN:stop -->
 
 ##### Table of Contents
 
@@ -29,14 +36,19 @@
 - [Environment Variables](#environment-variables)
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 - [class: Puppeteer](#class-puppeteer)
+  * [puppeteer.clearCustomQueryHandlers()](#puppeteerclearcustomqueryhandlers)
   * [puppeteer.connect(options)](#puppeteerconnectoptions)
   * [puppeteer.createBrowserFetcher([options])](#puppeteercreatebrowserfetcheroptions)
+  * [puppeteer.customQueryHandlerNames()](#puppeteercustomqueryhandlernames)
   * [puppeteer.defaultArgs([options])](#puppeteerdefaultargsoptions)
   * [puppeteer.devices](#puppeteerdevices)
   * [puppeteer.errors](#puppeteererrors)
   * [puppeteer.executablePath()](#puppeteerexecutablepath)
   * [puppeteer.launch([options])](#puppeteerlaunchoptions)
+  * [puppeteer.networkConditions](#puppeteernetworkconditions)
   * [puppeteer.product](#puppeteerproduct)
+  * [puppeteer.registerCustomQueryHandler(name, queryHandler)](#puppeteerregistercustomqueryhandlername-queryhandler)
+  * [puppeteer.unregisterCustomQueryHandler(name)](#puppeteerunregistercustomqueryhandlername)
 - [class: BrowserFetcher](#class-browserfetcher)
   * [browserFetcher.canDownload(revision)](#browserfetchercandownloadrevision)
   * [browserFetcher.download(revision[, progressCallback])](#browserfetcherdownloadrevision-progresscallback)
@@ -117,8 +129,10 @@
   * [page.coverage](#pagecoverage)
   * [page.deleteCookie(...cookies)](#pagedeletecookiecookies)
   * [page.emulate(options)](#pageemulateoptions)
+  * [page.emulateIdleState(overrides)](#pageemulateidlestateoverrides)
   * [page.emulateMediaFeatures(features)](#pageemulatemediafeaturesfeatures)
   * [page.emulateMediaType(type)](#pageemulatemediatypetype)
+  * [page.emulateNetworkConditions(networkConditions)](#pageemulatenetworkconditionsnetworkconditions)
   * [page.emulateTimezone(timezoneId)](#pageemulatetimezonetimezoneid)
   * [page.emulateVisionDeficiency(type)](#pageemulatevisiondeficiencytype)
   * [page.evaluate(pageFunction[, ...args])](#pageevaluatepagefunction-args)
@@ -152,7 +166,7 @@
   * [page.setGeolocation(options)](#pagesetgeolocationoptions)
   * [page.setJavaScriptEnabled(enabled)](#pagesetjavascriptenabledenabled)
   * [page.setOfflineMode(enabled)](#pagesetofflinemodeenabled)
-  * [page.setRequestInterception(value)](#pagesetrequestinterceptionvalue)
+  * [page.setRequestInterception(value[, cacheSafe])](#pagesetrequestinterceptionvalue-cachesafe)
   * [page.setUserAgent(userAgent)](#pagesetuseragentuseragent)
   * [page.setViewport(viewport)](#pagesetviewportviewport)
   * [page.tap(selector)](#pagetapselector)
@@ -212,6 +226,7 @@
 - [class: ConsoleMessage](#class-consolemessage)
   * [consoleMessage.args()](#consolemessageargs)
   * [consoleMessage.location()](#consolemessagelocation)
+  * [consoleMessage.stackTrace()](#consolemessagestacktrace)
   * [consoleMessage.text()](#consolemessagetext)
   * [consoleMessage.type()](#consolemessagetype)
 - [class: Frame](#class-frame)
@@ -351,6 +366,7 @@
   * [eventEmitter.once(event, handler)](#eventemitteronceevent-handler)
   * [eventEmitter.removeAllListeners([event])](#eventemitterremovealllistenersevent)
   * [eventEmitter.removeListener(event, handler)](#eventemitterremovelistenerevent-handler)
+- [interface: CustomQueryHandler](#interface-customqueryhandler)
 <!-- GEN:stop -->
 
 ### Overview
@@ -463,6 +479,8 @@ const puppeteer = require('puppeteer');
   await browser.close();
 })();
 ```
+#### puppeteer.clearCustomQueryHandlers()
+Clears all registered handlers.
 
 #### puppeteer.connect(options)
 - `options` <[Object]>
@@ -490,6 +508,9 @@ This methods attaches Puppeteer to an existing browser instance.
   - `platform` <"linux"|"mac"|"win32"|"win64"> [string] for the current platform. Possible values are: `mac`, `win32`, `win64`, `linux`. Defaults to the current platform.
   - `product` <"chrome"|"firefox"> [string] for the product to run. Possible values are: `chrome`, `firefox`. Defaults to `chrome`.
 - returns: <[BrowserFetcher]>
+
+#### puppeteer.customQueryHandlerNames()
+- returns: <[Array]<string>> A list with the names of all registered custom query handlers.
 
 #### puppeteer.defaultArgs([options])
 - `options` <[Object]>  Set of configurable options to set on the browser. Can have the following fields:
@@ -545,7 +566,7 @@ try {
 > **NOTE** The old way (Puppeteer versions <= v1.14.0) errors can be obtained with `require('puppeteer/Errors')`.
 
 #### puppeteer.executablePath()
-- returns: <[string]> A path where Puppeteer expects to find the bundled browser. The browser binary might not be there if the download was skipped with [`PUPPETEER_SKIP_DOWNLOAD`](#environment-variables).
+- returns: <[string]> A path where Puppeteer expects to find the bundled browser. The browser binary might not be there if the download was skipped with [`PUPPETEER_SKIP_CHROMIUM_DOWNLOAD`](#environment-variables).
 
 > **NOTE** `puppeteer.executablePath()` is affected by the `PUPPETEER_EXECUTABLE_PATH` and `PUPPETEER_CHROMIUM_REVISION` env variables. See [Environment Variables](#environment-variables) for details.
 
@@ -594,11 +615,53 @@ const browser = await puppeteer.launch({
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for a description of the differences between Chromium and Chrome. [`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes some differences for Linux users.
 
+#### puppeteer.networkConditions
+- returns: <[Object]>
+
+Returns a list of network conditions to be used with [`page.emulateNetworkConditions(networkConditions)`](#pageemulatenetworkconditionsnetworkconditions). Actual list of
+conditions can be found in [`src/common/NetworkConditions.ts`](https://github.com/puppeteer/puppeteer/blob/main/src/common/NetworkConditions.ts).
+
+```js
+const puppeteer = require('puppeteer');
+const slow3G = puppeteer.networkConditions['Slow 3G'];
+
+(async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.emulateNetworkConditions(slow3G);
+  await page.goto('https://www.google.com');
+  // other actions...
+  await browser.close();
+})();
+```
+
 #### puppeteer.product
 - returns: <[string]> returns the name of the browser that is under automation (`"chrome"` or `"firefox"`)
 
 The product is set by the `PUPPETEER_PRODUCT` environment variable or the `product` option in [puppeteer.launch([options])](#puppeteerlaunchoptions) and defaults to `chrome`. Firefox support is experimental and requires to install Puppeteer via `PUPPETEER_PRODUCT=firefox npm i puppeteer`.
 
+#### puppeteer.registerCustomQueryHandler(name, queryHandler)
+- `name` <[string]> The name that the custom query handler will be registered under.
+- `queryHandler` <[CustomQueryHandler]> The [custom query handler](#interface-customqueryhandler) to register.
+
+Registers a [custom query handler](#interface-customqueryhandler). After registration, the handler can be used everywhere where a selector is expected by prepending the selection string with `<name>/`. The name is only allowed to consist of lower- and upper case latin letters.
+
+Example:
+
+```js
+puppeteer.registerCustomQueryHandler('getByClass', {
+  queryOne: (element, selector) => {
+    return element.querySelector(`.${selector}`);
+  },
+  queryAll: (element, selector) => {
+    return element.querySelectorAll(`.${selector}`);
+  },
+});
+const aHandle = await page.$('getByClass/…');
+```
+
+#### puppeteer.unregisterCustomQueryHandler(name)
+- `name` <[string]> The name of the query handler to unregister.
 
 ### class: BrowserFetcher
 
@@ -1091,7 +1154,7 @@ const [popup] = await Promise.all([
 #### event: 'request'
 - <[HTTPRequest]>
 
-Emitted when a page issues a request. The [request] object is read-only.
+Emitted when a page issues a request. The [HTTPRequest] object is read-only.
 In order to intercept and mutate requests, see `page.setRequestInterception`.
 
 #### event: 'requestfailed'
@@ -1109,15 +1172,15 @@ Emitted when a request finishes successfully.
 #### event: 'response'
 - <[HTTPResponse]>
 
-Emitted when a [response] is received.
+Emitted when a [HTTPResponse] is received.
 
 #### event: 'workercreated'
-- <[Worker]>
+- <[WebWorker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
 
 #### event: 'workerdestroyed'
-- <[Worker]>
+- <[WebWorker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
@@ -1179,7 +1242,7 @@ Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector
 - `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
-The method evaluates the XPath expression.
+The method evaluates the XPath expression relative to the page document as its context node. If there are no such elements, the method resolves to an empty array.
 
 Shortcut for [page.mainFrame().$x(expression)](#framexexpression)
 
@@ -1341,9 +1404,15 @@ const iPhone = puppeteer.devices['iPhone 6'];
 
 List of all available devices is available in the source code: [src/common/DeviceDescriptors.ts](https://github.com/puppeteer/puppeteer/blob/main/src/common/DeviceDescriptors.ts).
 
+#### page.emulateIdleState(overrides)
+- `overrides` <?[Object]> If not set, clears emulation
+  - `isUserActive` <[boolean]> **required**
+  - `isScreenUnlocked` <[boolean]> **required**
+- returns: <[Promise]>
+
 #### page.emulateMediaFeatures(features)
 - `features` <?[Array]<[Object]>> Given an array of media feature objects, emulates CSS media features on the page. Each media feature object must have the following properties:
-  - `name` <[string]> The CSS media feature name. Supported names are `'prefers-colors-scheme'` and `'prefers-reduced-motion'`.
+  - `name` <[string]> The CSS media feature name. Supported names are `'prefers-colors-scheme'`, `'prefers-reduced-motion'`, and `'color-gamut'`.
   - `value` <[string]> The value for the given CSS media feature.
 - returns: <[Promise]>
 
@@ -1372,6 +1441,16 @@ await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches
 // → true
 await page.evaluate(() => matchMedia('(prefers-reduced-motion: no-preference)').matches);
 // → false
+
+await page.emulateMediaFeatures([
+  { name: 'color-gamut', value: 'p3' },
+]);
+await page.evaluate(() => matchMedia('(color-gamut: srgb)').matches);
+// → true
+await page.evaluate(() => matchMedia('(color-gamut: p3)').matches);
+// → true
+await page.evaluate(() => matchMedia('(color-gamut: rec2020)').matches);
+// → false
 ```
 
 #### page.emulateMediaType(type)
@@ -1395,6 +1474,29 @@ await page.evaluate(() => matchMedia('screen').matches);
 // → true
 await page.evaluate(() => matchMedia('print').matches);
 // → false
+```
+
+#### page.emulateNetworkConditions(networkConditions)
+- `networkConditions` <?[Object]> Passing `null` disables network condition emulation.
+  - `download` <[number]> Download speed (bytes/s), `-1` to disable
+  - `upload` <[number]> Upload speed (bytes/s), `-1` to disable
+  - `latency` <[number]> Latency (ms), `0` to disable
+- returns: <[Promise]>
+
+> **NOTE** This does not affect WebSockets and WebRTC PeerConnections (see https://crbug.com/563644)
+
+```js
+const puppeteer = require('puppeteer');
+const slow3G = puppeteer.networkConditions['Slow 3G'];
+
+(async () => {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.emulateNetworkConditions(slow3G);
+  await page.goto('https://www.google.com');
+  // other actions...
+  await browser.close();
+})();
 ```
 
 #### page.emulateTimezone(timezoneId)
@@ -1639,7 +1741,7 @@ Navigate to the next page in history.
 - the remote server does not respond or is unreachable.
 - the main resource failed to load.
 
-`page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [response.status()](#responsestatus).
+`page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [response.status()](#httpresponsestatus).
 
 > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
 
@@ -1916,7 +2018,7 @@ The extra HTTP headers will be sent with every request the page initiates.
 > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
 
 #### page.setGeolocation(options)
-- `options` <[GeolocationOptions](####GeolocationOptions)>
+- `options` <[GeolocationOptions](#geolocationoptions)>
 - returns: <[Promise]>
 
 Sets the page's geolocation.
@@ -1937,8 +2039,9 @@ await page.setGeolocation({latitude: 59.95, longitude: 30.31667});
 - `enabled` <[boolean]> When `true`, enables offline mode for the page.
 - returns: <[Promise]>
 
-#### page.setRequestInterception(value)
+#### page.setRequestInterception(value[, cacheSafe])
 - `value` <[boolean]> Whether to enable request interception.
+- `cacheSafe` <[boolean]> Whether to trust browser caching. If set to false, enabling request interception disables page caching. Defaults to false.
 - returns: <[Promise]>
 
 Activating request interception enables `request.abort`, `request.continue` and
@@ -2211,6 +2314,7 @@ return firstRequest.url();
 ```js
 const firstResponse = await page.waitForResponse('https://example.com/resource');
 const finalResponse = await page.waitForResponse(response => response.url() === 'https://example.com' && response.status() === 200);
+const finalResponse = await page.waitForResponse(async response => { return (await response.text()).includes('<html>') })
 return finalResponse.ok();
 ```
 
@@ -2249,7 +2353,7 @@ Shortcut for [page.mainFrame().waitForSelector(selector[, options])](#framewaitf
 - `milliseconds` <[number]> The number of milliseconds to wait for.
 - returns: <[Promise]> Promise which resolves after the timeout has completed.
 
-Pauses script execution for the given number of seconds before continuing:
+Pauses script execution for the given number of milliseconds before continuing:
 
 ```js
 const puppeteer = require('puppeteer');
@@ -2296,7 +2400,7 @@ const puppeteer = require('puppeteer');
 Shortcut for [page.mainFrame().waitForXPath(xpath[, options])](#framewaitforxpathxpath-options).
 
 #### page.workers()
-- returns: <[Array]<[Worker]>>
+- returns: <[Array]<[WebWorker]>>
 This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
 
 > **NOTE** This does not contain ServiceWorkers
@@ -2613,8 +2717,8 @@ Dispatches a `mouseup` event.
 
 #### mouse.wheel([options])
 - `options` <[Object]>
-  - `deltaX` X delta in CSS pixels for mouse wheel event (default: 0). Positive values emulate a scroll up and negative values a scroll down event.
-  - `deltaY` Y delta in CSS pixels for mouse wheel event (default: 0). Positive values emulate a scroll right and negative values a scroll left event.
+  - `deltaX` X delta in CSS pixels for mouse wheel event (default: 0). Positive values emulate a scroll right and negative values a scroll left event.
+  - `deltaY` Y delta in CSS pixels for mouse wheel event (default: 0). Positive values emulate a scroll down and negative values a scroll up event.
 - returns: <[Promise]>
 
 Dispatches a `mousewheel` event.
@@ -2688,7 +2792,6 @@ await fileChooser.accept(['/tmp/myfile.pdf']);
 - returns: <[Promise]>
 
 #### fileChooser.cancel()
-- returns: <[Promise]>
 
 Closes the file chooser without selecting any files.
 
@@ -2744,6 +2847,12 @@ const puppeteer = require('puppeteer');
   - `lineNumber` <[number]> 0-based line number in the resource if known or `undefined` otherwise.
   - `columnNumber` <[number]> 0-based column number in the resource if known or `undefined` otherwise.
 
+#### consoleMessage.stackTrace()
+- returns: <[Array]<[Object]>>
+  - `url` <[string]> URL of the resource if known or `undefined` otherwise.
+  - `lineNumber` <[number]> 0-based line number in the resource if known or `undefined` otherwise.
+  - `columnNumber` <[number]> 0-based column number in the resource if known or `undefined` otherwise.
+
 #### consoleMessage.text()
 - returns: <[string]>
 
@@ -2794,7 +2903,7 @@ An example of getting text from an iframe element:
 - `selector` <[string]> A [selector] to query frame for
 - returns: <[Promise]<?[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
 
-The method queries frame for the selector. If there's no such element within the frame, the method will resolve to `null`.
+The method queries frame for the selector. If there's no such element within the frame, the method resolves to `null`.
 
 #### frame.$$(selector)
 - `selector` <[string]> A [selector] to query frame for
@@ -2838,7 +2947,7 @@ const html = await frame.$eval('.main-container', e => e.outerHTML);
 - `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
-The method evaluates the XPath expression.
+The method evaluates the XPath expression relative to the frame document as its context node. If there are no such elements, the method resolves to an empty array.
 
 #### frame.addScriptTag(options)
 - `options` <[Object]>
@@ -2978,7 +3087,7 @@ If there's no element matching `selector`, the method throws an error.
 - the remote server does not respond or is unreachable.
 - the main resource failed to load.
 
-`frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [response.status()](#responsestatus).
+`frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [response.status()](#httpresponsestatus).
 
 > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
 
@@ -3494,7 +3603,13 @@ expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 - `expression` <[string]> Expression to [evaluate](https://developer.mozilla.org/en-US/docs/Web/API/Document/evaluate).
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
-The method evaluates the XPath expression relative to the elementHandle. If there are no such elements, the method will resolve to an empty array.
+The method evaluates the XPath expression relative to the `elementHandle` as its context node. If there are no such elements, the method resolves to an empty array.
+
+The `expression` should have the context node to be evaluated properly:
+
+```js
+const [childHandle] = await parentHandle.$x('./div');
+```
 
 #### elementHandle.asElement()
 - returns: <[ElementHandle]>
@@ -3854,7 +3969,7 @@ page.on('request', request => {
 [HTTPResponse] class represents responses which are received by page.
 
 #### httpResponse.buffer()
-- returns: <Promise<[Buffer]>> Promise which resolves to a buffer with response body.
+- returns: <[Promise]<[Buffer]>> Promise which resolves to a buffer with response body.
 
 #### httpResponse.frame()
 - returns: <?[Frame]> A [Frame] that initiated this response, or `null` if navigating to error pages.
@@ -3873,7 +3988,7 @@ True if the response was served by a service worker.
 - returns: <[Object]> An object with HTTP headers associated with the response. All header names are lower-case.
 
 #### httpResponse.json()
-- returns: <Promise<[Object]>> Promise which resolves to a JSON representation of response body.
+- returns: <[Promise]<[Object]>> Promise which resolves to a JSON representation of response body.
 
 This method will throw if the response body is not parsable via `JSON.parse`.
 
@@ -4088,7 +4203,7 @@ TimeoutError is emitted whenever certain operations are terminated due to timeou
 A small EventEmitter class backed by [Mitt](https://github.com/developit/mitt/).
 
 #### eventEmitter.addListener(event, handler)
-- `event` <[string]|[symbol]> the event to remove the handler from.
+- `event` <[string]|[symbol]> the event to add the handler to.
 - `handler` <[Function]> the event listener that will be added.
 - returns: `this` so you can chain method calls
 
@@ -4129,6 +4244,10 @@ This method is identical to `on` and maintained for compatibility with Node's Ev
 
 This method is identical to `off` and maintained for compatibility with Node's EventEmitter. We recommend using `off` by default.
 
+### interface: CustomQueryHandler
+
+Contains two functions `queryOne` and `queryAll` that can be [registered](#puppeteerregistercustomqueryhandlername-queryhandler) as alternative querying strategies. The functions `queryOne` and `queryAll` are executed in the page context. `queryOne` should take an `Element` and a selector string as argument and return a single `Element` or `null` if no element is found. `queryAll` takes the same arguments but should instead return a `NodeList<Element>` or `Array<Element>` with all the elements that match the given query selector.
+
 [AXNode]: #accessibilitysnapshotoptions "AXNode"
 [Accessibility]: #class-accessibility "Accessibility"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
@@ -4167,7 +4286,7 @@ This method is identical to `off` and maintained for compatibility with Node's E
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [USKeyboardLayout]: ../src/common/USKeyboardLayout.ts "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
-[WebWorker]: #class-worker "Worker"
+[WebWorker]: #class-webworker "Worker"
 [boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
 [function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
 [iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
@@ -4178,3 +4297,4 @@ This method is identical to `off` and maintained for compatibility with Node's E
 [string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
 [symbol]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Symbol_type "Symbol"
 [xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"
+[CustomQueryHandler]: #interface-customqueryhandler "CustomQueryHandler"
